@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Finance Tracker</title>
+    </head>
+    <body>
+        <h1>USD Exchange Rates</h1>
+        <div id="rates">Loading...</div>
+
+        <script>
+            fetch('/api/rates')
+            .then(function(r) {return r.json()})
+            .then(function(data) {
+                var rates = data.rates;
+                var html = '';
+                for (var currency in rates) {
+                    html += '<p>'+currency+': '+rates[currency]+'</p>'; 
+                }
+            document.getElementById('rates').innerHTML = html;
+            });
+        </script>
+    </body>
+</html>
