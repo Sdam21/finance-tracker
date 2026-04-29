@@ -50,3 +50,17 @@ resource "aws_internet_gateway" "main" {
         Name = "finance-tracker-igw"
     }
 }
+
+#ECR Repository
+resource "aws_ecr_repository" "finance_tracker" {
+    name = "finance_tracker"
+    image_tag_mutability = "MUTABLE"
+
+    image_scanning_configuration {
+        scan_on_push = true
+    }
+
+    tags = {
+        Name = "finance-tracker-ecr"
+    }
+}
