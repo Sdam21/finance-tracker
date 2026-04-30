@@ -102,6 +102,13 @@ resource "aws_ecs_task_definition" "finance_tracker" {
       hostPort      = 5000
       protocol      = "tcp"
     }]
+    environment = [
+        {
+            name = "DATABASE_URL"
+            value = "postgresql://dbadmin:changeme123!@finance-tracker-db.capc4k2oy0fj.us-east-1.rds.amazonaws.com/financetracker"
+        }
+    ]
+    
     logConfiguration = {
       logDriver = "awslogs"
       options = {
