@@ -42,3 +42,7 @@ terraform destroy
 ## What I learned
 
 This was my first cloud project coming from a network engineering background. A lot of the VPC and subnet concepts translated directly from what I already knew but learning Terraform, Docker, and ECS was my main goal.
+
+## Next steps
+
+Not cloud related, but I would like to update this app to be a budget planner as away to get more comfortable with flask
