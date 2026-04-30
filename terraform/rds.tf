@@ -1,3 +1,10 @@
+variable "db_password" {
+    description = "RDS password"
+    type = string 
+    sensitive = true
+    default = "changeme123!"
+}
+
 #DB Subnet Group
 resource "aws_db_subnet_group" "main" {
     name = "finance-tracker-db-subnet"
@@ -43,7 +50,7 @@ resource "aws_db_instance" "postgres" {
 
     db_name = "financetracker"
     username = "dbadmin"
-    password = "changeme123!"
+    password = var.db_password
 
     db_subnet_group_name = aws_db_subnet_group.main.name
     vpc_security_group_ids = [aws_security_group.rds.id]
