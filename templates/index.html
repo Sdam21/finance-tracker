@@ -1,23 +1,205 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Finance Tracker</title>
-    </head>
-    <body>
-        <h1>USD Exchange Rates</h1>
-        <div id="rates">Loading...</div>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget Tracker</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+    h1 { text-align: center; margin-bottom: 20px; color: #333; }
 
-        <script>
-            fetch('/api/rates')
-            .then(function(r) {return r.json()})
-            .then(function(data) {
-                var rates = data.rates;
-                var html = '';
-                for (var currency in rates) {
-                    html += '<p>'+currency+': '+rates[currency]+'</p>'; 
-                }
-            document.getElementById('rates').innerHTML = html;
-            });
-        </script>
-    </body>
+    .summary {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 30px;
+    }
+    .summary-card {
+      background: white;
+      padding: 20px 40px
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .summary-card h2 { font-size: 14px; color: #666; margin-bottom: 8px; }
+    .summary-card p { font-size: 24px; font-weight: bold; }
+    .income { color: #27ae60; }
+    .expense { color: #e74c3c; }
+    .balance { color: #2c3e50; }
+
+    .form-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .form-container h2 { margin-bottom: 15px; color: #333; }
+    .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .form-row input, .form-row select {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      flex: 1;
+    }
+    .form-row button {
+      padding: 10px 20px;
+      background: #2c3e50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .form-row button:hover { background: #34495e; }
+
+    .transactions {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .transactions h2 { padding: 20px; border-bottom: 1px solid #eee; color: #333; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 13px; color: #666; }
+    td { padding: 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    tr:last-child td { border-bottom: none; }
+    .badge {
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .badge-income { background: #d5f5e3; color: #27ae60; }
+    .badge-expense { background: #fadbd8; color: #e74c3c; }
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #e74c3c;
+      cursor: pointer;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Budget Tracker</h1>
+
+  <div class="summary">
+    <div class="summary-card">
+      <h2>INCOME</h2>
+      <p class="income" id="total-income">$0.00</p>
+    </div>
+    <div class="summary-card">
+      <h2>EXPENSES</h2>
+      <p class="expense" id="total-expenses">$0.00</p>
+    </div>
+    <div class="summary-card">
+      <h2>BALANCE</h2>
+      <p class="balance" id="total-balance">$0.00</p>
+    </div>
+  </div>
+
+  <div class="form-container">
+    <h2>Add Transaction</h2>
+    <div class="form-row">
+      <select id="type">
+        <option value="income">Income</option>
+        <option value="expense">Expense</option>
+      </select>
+      <input type="number" id="amount" placeholder="Amount" step="0.01" min="0">
+      <select id="category">
+        <option value="salary">Salary</option>
+        <option value="food">Food</option>
+        <option value="rent">Rent</option>
+        <option value="transport">Transport</option>
+        <option value="utilities">Utilities</option>
+        <option value="entertainment">Entertainment</option>
+        <option value="health">Health</option>
+        <option value="other">Other</option>
+      </select>
+      <input type="text" id="description" placeholder="Description (optional)">
+      <button onclick="addTransaction()">Add</button>
+    </div>
+  </div>
+
+  <div class="transactions">
+    <h2>Transactions</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Description</th>
+          <th>Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="transaction-list"></tbody>
+    </table>
+  </div>
+
+  <script>
+    function loadData() {
+      fetch('/api/summary')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          document.getElementById('total-income').textContent = '$' + data.income.toFixed(2);
+          document.getElementById('total-expenses').textContent = '$' + data.expenses.toFixed(2);
+          document.getElementById('total-balance').textContent = '$' + data.balance.toFixed(2);
+        });
+
+      fetch('/api/transactions')
+        .then(function(r) { return r.json(); })
+        .then(function(transactions) {
+          var html = '';
+          transactions.forEach(function(t) {
+            html += '<tr>';
+            html += '<td>' + t.date + '</td>';
+            html += '<td><span class="badge badge-' + t.type + '">' + t.type + '</span></td>';
+            html += '<td>' + t.category + '</td>';
+            html += '<td>' + t.description + '</td>';
+            html += '<td>$' + t.amount.toFixed(2) + '</td>';
+            html += '<td><button class="delete-btn" onclick="deleteTransaction(' + t.id + ')">×</button></td>';
+            html += '</tr>';
+          });
+          document.getElementById('transaction-list').innerHTML = html;
+        });
+    }
+
+    function addTransaction() {
+      var data = {
+        type: document.getElementById('type').value,
+        amount: parseFloat(document.getElementById('amount').value),
+        category: document.getElementById('category').value,
+        description: document.getElementById('description').value
+      };
+
+      if (!data.amount || data.amount <= 0) {
+        alert('Please enter a valid amount');
+        return;
+      }
+
+      fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(function() {
+        document.getElementById('amount').value = '';
+        document.getElementById('description').value = '';
+        loadData();
+      });
+    }
+
+    function deleteTransaction(id) {
+      fetch('/api/transactions/' + id, { method: 'DELETE' })
+        .then(function() { loadData(); });
+    }
+
+    loadData();
+  </script>
+
+</body>
 </html>
