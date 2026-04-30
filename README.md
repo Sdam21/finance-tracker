@@ -1,4 +1,4 @@
-#Finance Tracker
+## Finance Tracker
 
 A simple currency exchange rate dashboard. I built it to learn AWS and cloud infrastucture.
 
