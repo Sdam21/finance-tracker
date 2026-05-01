@@ -2,9 +2,9 @@
 
 A simple currency exchange rate dashboard. I built it to learn AWS and cloud infrastucture.
 
-The app currently pulls live exchange rates from a public API and displays them in the browser.
+The app is a simple budget webpage
 
-The app was created as a way to learn how to deploy something in AWS
+This app was created as a way to learn how to deploy something in AWS
 
 ## BUILD
 - A Flask web app running in Docker
